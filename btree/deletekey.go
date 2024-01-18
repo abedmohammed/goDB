@@ -106,3 +106,29 @@ func shouldMerge(tree *BTree, node BNode, idx uint16, updated BNode) (int, BNode
 
 	return 0, BNode{}
 }
+
+// deletion interface
+// hieght reduced by one if the root is not a leaf, or the root has only one child
+func (tree *BTree) Delete(key []byte) bool {
+	if len(key) == 0 {
+		panic("Empty key!")
+	}
+	if len(key) > BTREE_MAX_KEY_SIZE {
+		panic("Key length greater than maximum size!")
+	}
+
+	updated := treeDelete(tree, tree.get(tree.root), key)
+	if len(updated.data) == 0 {
+		return false // not found
+	}
+
+	tree.del(tree.root)
+	// if 1 key in internal node
+	if updated.btype() == BNODE_NODE && updated.nkeys() == 1 {
+		// remove level
+		tree.root = updated.getPtr(0) // assign root to 0 pointer
+	} else {
+		tree.root = tree.new(updated) // assign root to point to updated node
+	}
+	return true
+}
