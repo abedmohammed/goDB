@@ -134,8 +134,8 @@ func (node BNode) nbytes() uint16 {
 // tree container struct
 type C struct {
 	tree  BTree
-	ref   map[string]string
-	pages map[uint64]BNode // hashmap to hold pages in-memory, no disk persistence yet
+	ref   map[string]string // reference map to record each b-tree update
+	pages map[uint64]BNode  // hashmap to hold pages in-memory, no disk persistence yet
 }
 
 func newC() *C {
