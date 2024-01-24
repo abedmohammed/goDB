@@ -1,4 +1,4 @@
-package main
+package experiment
 
 import (
 	"fmt"
@@ -7,7 +7,7 @@ import (
 	"github.com/abedmohammed/goDB/utils"
 )
 
-func main() {
+func runWrite() {
 	fmt.Println("Welcome to goDB")
 
 	text := "Testing write to db"
