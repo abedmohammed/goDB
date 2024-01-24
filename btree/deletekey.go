@@ -2,6 +2,8 @@ package btree
 
 import (
 	"bytes"
+
+	"github.com/abedmohammed/goDB/utils"
 )
 
 // helper to remove a key from a leaf node
@@ -60,9 +62,7 @@ func nodeDelete(tree *BTree, node BNode, idx uint16, key []byte) BNode {
 	case mergeDir == 0:
 		if updated.nkeys() == 0 { // parent only has one child, child is empty after deletion
 			// no siblings to merge with therefore discard empty kid and return empty parent
-			if node.nkeys() != 1 || idx != 0 {
-				panic("Bad Deletion!")
-			}
+			utils.Assert(node.nkeys() != 1 || idx != 0, "Bad Deletion!")
 			new.setHeader(BNODE_NODE, 0)
 			// empty node will be eliminated before reaching the root
 		} else {
@@ -110,12 +110,8 @@ func shouldMerge(tree *BTree, node BNode, idx uint16, updated BNode) (int, BNode
 // deletion interface
 // hieght reduced by one if the root is not a leaf, or the root has only one child
 func (tree *BTree) Delete(key []byte) bool {
-	if len(key) == 0 {
-		panic("Empty key!")
-	}
-	if len(key) > BTREE_MAX_KEY_SIZE {
-		panic("Key length greater than maximum size!")
-	}
+	utils.Assert(len(key) == 0, "Empty key!")
+	utils.Assert(len(key) > BTREE_MAX_KEY_SIZE, "Key length greater than maximum size!")
 
 	updated := treeDelete(tree, tree.get(tree.root), key)
 	if len(updated.data) == 0 {

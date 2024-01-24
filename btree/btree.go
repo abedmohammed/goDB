@@ -3,6 +3,8 @@ package btree
 import (
 	"encoding/binary"
 	"unsafe"
+
+	"github.com/abedmohammed/goDB/utils"
 )
 
 type BNode struct {
@@ -33,9 +35,7 @@ const BTREE_MAX_VAL_SIZE = 3000
 
 func init() {
 	node1max := HEADER + 8 + 2 + 4 + BTREE_MAX_KEY_SIZE + BTREE_MAX_VAL_SIZE
-	if node1max > BTREE_PAGE_SIZE {
-		panic("Exceeded page size!")
-	}
+	utils.Assert(node1max > BTREE_PAGE_SIZE, "Exceeded page size!")
 }
 
 // header functions
@@ -58,18 +58,14 @@ func (node BNode) setHeader(btype uint16, nkeys uint16) {
 // pointer functions
 // returns pointer to child node at given index
 func (node BNode) getPtr(idx uint16) uint64 {
-	if idx >= node.nkeys() {
-		panic("Index out of bounds!")
-	}
+	utils.Assert(idx >= node.nkeys(), "Index out of bounds!")
 	pos := HEADER + 8*idx
 	return binary.LittleEndian.Uint64(node.data[pos:])
 }
 
 // update child node pointer
 func (node BNode) setPtr(idx uint16, val uint64) {
-	if idx >= node.nkeys() {
-		panic("Index out of bounds!")
-	}
+	utils.Assert(idx >= node.nkeys(), "Index out of bounds!")
 	pos := HEADER + 8*idx
 	binary.LittleEndian.PutUint64(node.data[pos:], val)
 }
@@ -77,9 +73,8 @@ func (node BNode) setPtr(idx uint16, val uint64) {
 // offset functions
 // returns the value of the offset i.e. the location of the kv-pair at given index
 func offsetPos(node BNode, idx uint16) uint16 {
-	if idx < 1 || idx > node.nkeys() {
-		panic("Index out of bounds!")
-	}
+	utils.Assert(idx < 1 || idx > node.nkeys(), "Index out of bounds!")
+
 	return HEADER + 8*node.nkeys() + 2*(idx-1)
 }
 
@@ -99,17 +94,14 @@ func (node BNode) setOffset(idx uint16, offset uint16) {
 // key-value pair functions
 // returns position/byte-offset of kv-pair at idx
 func (node BNode) kvPos(idx uint16) uint16 {
-	if idx > node.nkeys() {
-		panic("Index out of bounds!")
-	}
+	utils.Assert(idx > node.nkeys(), "Index out of bounds!")
 	return HEADER + 8*node.nkeys() + 2*node.nkeys() + node.getOffset(idx)
 }
 
 // returns key of kv-pair at idx from data array
 func (node BNode) getKey(idx uint16) []byte {
-	if idx >= node.nkeys() {
-		panic("Index out of bounds!")
-	}
+	utils.Assert(idx >= node.nkeys(), "Index out of bounds!")
+
 	pos := node.kvPos(idx)                              // byte position of kv-pair
 	klen := binary.LittleEndian.Uint16(node.data[pos:]) // 2 bytes that represent the key length
 	return node.data[pos+4:][:klen]                     // skip klen, vlen, return key
@@ -117,9 +109,8 @@ func (node BNode) getKey(idx uint16) []byte {
 
 // returns value of kv-pair at idx from data array
 func (node BNode) getVal(idx uint16) []byte {
-	if idx >= node.nkeys() {
-		panic("Index out of bounds!")
-	}
+	utils.Assert(idx >= node.nkeys(), "Index out of bounds!")
+
 	pos := node.kvPos(idx) // byte position of kv-pair
 	klen := binary.LittleEndian.Uint16(node.data[pos:])
 	vlen := binary.LittleEndian.Uint16(node.data[pos+2:])
@@ -144,27 +135,23 @@ func NewC() *C {
 		tree: BTree{
 			get: func(ptr uint64) BNode {
 				node, ok := pages[ptr]
-				if !ok {
-					panic("Note not found in pages!")
-				}
+				utils.Assert(!ok, "Note not found in pages!")
+
 				return node
 			},
 			new: func(node BNode) uint64 {
-				if node.nbytes() > BTREE_PAGE_SIZE {
-					panic("Node too large!")
-				}
+				utils.Assert(node.nbytes() > BTREE_PAGE_SIZE, "Node too large!")
+
 				key := uint64(uintptr(unsafe.Pointer(&node.data[0])))
-				if pages[key].data != nil {
-					panic("Data at key is not null")
-				}
+				utils.Assert(pages[key].data != nil, "Data at key is not null")
+
 				pages[key] = node
 				return key
 			},
 			del: func(ptr uint64) {
 				_, ok := pages[ptr]
-				if !ok {
-					panic("Note not found in pages!")
-				}
+				utils.Assert(!ok, "Note not found in pages!")
+
 				delete(pages, ptr)
 			},
 		},

@@ -3,6 +3,8 @@ package btree
 import (
 	"bytes"
 	"encoding/binary"
+
+	"github.com/abedmohammed/goDB/utils"
 )
 
 // returns the first kid node whose range intersects the key. (kid[i] <= key)
@@ -42,12 +44,8 @@ func leafUpdate(new BNode, old BNode, idx uint16, key []byte, val []byte) {
 
 // copy multiple KVs into the position
 func nodeAppendRange(new BNode, old BNode, dstNew uint16, srcOld uint16, n uint16) {
-	if srcOld+n <= old.nkeys() {
-		panic("Index out of bounds!")
-	}
-	if dstNew+n <= new.nkeys() {
-		panic("Index out of bounds!")
-	}
+	utils.Assert(srcOld+n <= old.nkeys(), "Index out of bounds!")
+	utils.Assert(dstNew+n <= new.nkeys(), "Index out of bounds!")
 
 	if n == 0 {
 		return
@@ -149,9 +147,7 @@ func nodeSplit3(old BNode) (uint16, [3]BNode) {
 	middle := BNode{make([]byte, BTREE_PAGE_SIZE)}
 	nodeSplit2(leftleft, middle, left)
 
-	if leftleft.nbytes() <= BTREE_PAGE_SIZE {
-		panic("Index out of bounds!")
-	}
+	utils.Assert(leftleft.nbytes() <= BTREE_PAGE_SIZE, "Index out of bounds!")
 	return 3, [3]BNode{leftleft, middle, right}
 }
 
@@ -179,15 +175,10 @@ func nodeReplace2Kid(new BNode, old BNode, idx uint16, merged uint64, key []byte
 // insertion interface
 
 func (tree *BTree) Insert(key []byte, val []byte) {
-	if len(key) == 0 {
-		panic("Empty key!")
-	}
-	if len(key) > BTREE_MAX_KEY_SIZE {
-		panic("Key length greater than maximum!")
-	}
-	if len(val) > BTREE_MAX_VAL_SIZE {
-		panic("Val length greater than maximum!")
-	}
+
+	utils.Assert(len(key) == 0, "Empty key!")
+	utils.Assert(len(key) > BTREE_MAX_KEY_SIZE, "Key length greater than maximum!")
+	utils.Assert(len(val) > BTREE_MAX_VAL_SIZE, "Val length greater than maximum!")
 
 	if tree.root == 0 { // inserting the first key
 		// create first leaf node as root
