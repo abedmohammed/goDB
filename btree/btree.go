@@ -2,6 +2,7 @@ package btree
 
 import (
 	"encoding/binary"
+	"fmt"
 	"unsafe"
 
 	"github.com/abedmohammed/goDB/utils"
@@ -58,14 +59,14 @@ func (node BNode) setHeader(btype uint16, nkeys uint16) {
 // pointer functions
 // returns pointer to child node at given index
 func (node BNode) getPtr(idx uint16) uint64 {
-	utils.Assert(idx >= node.nkeys(), "Index out of bounds!")
+	utils.Assert(idx >= node.nkeys(), "getPtr: Index out of bounds!")
 	pos := HEADER + 8*idx
 	return binary.LittleEndian.Uint64(node.data[pos:])
 }
 
 // update child node pointer
 func (node BNode) setPtr(idx uint16, val uint64) {
-	utils.Assert(idx >= node.nkeys(), "Index out of bounds!")
+	utils.Assert(idx >= node.nkeys(), "setPtr: Index out of bounds!")
 	pos := HEADER + 8*idx
 	binary.LittleEndian.PutUint64(node.data[pos:], val)
 }
@@ -73,7 +74,7 @@ func (node BNode) setPtr(idx uint16, val uint64) {
 // offset functions
 // returns the value of the offset i.e. the location of the kv-pair at given index
 func offsetPos(node BNode, idx uint16) uint16 {
-	utils.Assert(idx < 1 || idx > node.nkeys(), "Index out of bounds!")
+	utils.Assert(idx < 1 || idx > node.nkeys(), "offsetPos: Index out of bounds!")
 
 	return HEADER + 8*node.nkeys() + 2*(idx-1)
 }
@@ -94,13 +95,13 @@ func (node BNode) setOffset(idx uint16, offset uint16) {
 // key-value pair functions
 // returns position/byte-offset of kv-pair at idx
 func (node BNode) kvPos(idx uint16) uint16 {
-	utils.Assert(idx > node.nkeys(), "Index out of bounds!")
+	utils.Assert(idx > node.nkeys(), "kvPos: Index out of bounds!")
 	return HEADER + 8*node.nkeys() + 2*node.nkeys() + node.getOffset(idx)
 }
 
 // returns key of kv-pair at idx from data array
 func (node BNode) getKey(idx uint16) []byte {
-	utils.Assert(idx >= node.nkeys(), "Index out of bounds!")
+	utils.Assert(idx >= node.nkeys(), "getKey: Index out of bounds!")
 
 	pos := node.kvPos(idx)                              // byte position of kv-pair
 	klen := binary.LittleEndian.Uint16(node.data[pos:]) // 2 bytes that represent the key length
@@ -109,7 +110,7 @@ func (node BNode) getKey(idx uint16) []byte {
 
 // returns value of kv-pair at idx from data array
 func (node BNode) getVal(idx uint16) []byte {
-	utils.Assert(idx >= node.nkeys(), "Index out of bounds!")
+	utils.Assert(idx >= node.nkeys(), "getVal: Index out of bounds!")
 
 	pos := node.kvPos(idx) // byte position of kv-pair
 	klen := binary.LittleEndian.Uint16(node.data[pos:])
@@ -168,4 +169,13 @@ func (c *C) Add(key string, val string) {
 func (c *C) Del(key string) bool {
 	delete(c.ref, key)
 	return c.tree.Delete([]byte(key))
+}
+
+func (c *C) PrintTree() {
+	// fmt.Printf("Root page: %d\n", c.pages[c.tree.root])
+	fmt.Println("Pages:")
+	for pt, node := range c.pages {
+		fmt.Println("Pointer:", pt)
+		fmt.Println("BNode data:", node.data)
+	}
 }
