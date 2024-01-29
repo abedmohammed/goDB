@@ -44,8 +44,8 @@ func leafUpdate(new BNode, old BNode, idx uint16, key []byte, val []byte) {
 
 // copy multiple KVs into the position
 func nodeAppendRange(new BNode, old BNode, dstNew uint16, srcOld uint16, n uint16) {
-	utils.Assert(srcOld+n <= old.nkeys(), "Index out of bounds!")
-	utils.Assert(dstNew+n <= new.nkeys(), "Index out of bounds!")
+	utils.Assert(srcOld+n <= old.nkeys(), "nodeAppendRange: Index out of bounds!")
+	utils.Assert(dstNew+n <= new.nkeys(), "nodeAppendRange: Index out of bounds!")
 
 	if n == 0 {
 		return
@@ -147,7 +147,7 @@ func nodeSplit3(old BNode) (uint16, [3]BNode) {
 	middle := BNode{make([]byte, BTREE_PAGE_SIZE)}
 	nodeSplit2(leftleft, middle, left)
 
-	utils.Assert(leftleft.nbytes() <= BTREE_PAGE_SIZE, "Index out of bounds!")
+	utils.Assert(leftleft.nbytes() <= BTREE_PAGE_SIZE, "nodeSplit3: Index out of bounds!")
 	return 3, [3]BNode{leftleft, middle, right}
 }
 
